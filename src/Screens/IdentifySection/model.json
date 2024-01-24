@@ -1,0 +1,114 @@
+{
+    "format": "tfjs-graph-model",
+    "generatedBy": "TensorFlow.js v2.10.2",
+    "convertedBy": "TensorFlow.js Converter v2.10.2",
+    "modelTopology": {
+      "model_config": {
+        "name": "sequential_1",
+        "layers": [
+          {
+            "name": "input_layer",
+            "class_name": "InputLayer",
+            "config": {
+              "batch_input_shape": [null, 224, 224, 3],
+              "dtype": "float32",
+              "name": "input_1",
+              "sparse": false
+            },
+            "inbound_nodes": []
+          },
+          {
+            "name": "conv2d_layer",
+            "class_name": "Conv2D",
+            "config": {
+              "name": "conv2d_1",
+              "trainable": false,
+              "batch_input_shape": [null, 224, 224, 3],
+              "dtype": "float32",
+              "filters": 32,
+              "kernel_size": [3, 3],
+              "strides": [1, 1],
+              "padding": "valid",
+              "data_format": "channels_last",
+              "dilation_rate": [1, 1],
+              "activation": "relu",
+              "use_bias": true,
+              "kernel_initializer": {
+                "class_name": "GlorotUniform",
+                "config": { "seed": null }
+              },
+              "bias_initializer": { "class_name": "Zeros", "config": {} },
+              "kernel_regularizer": null,
+              "bias_regularizer": null,
+              "activity_regularizer": null,
+              "kernel_constraint": null,
+              "bias_constraint": null
+            },
+            "inbound_nodes": [
+              ["input_layer", 0, 0, {}]
+            ],
+            "outbound_nodes": [
+              ["flatten_layer", 0, 0, {}]
+            ]
+          },
+          {
+            "name": "flatten_layer",
+            "class_name": "Flatten",
+            "config": {
+              "name": "flatten_1",
+              "trainable": false,
+              "dtype": "float32",
+              "data_format": "channels_last"
+            },
+            "inbound_nodes": [
+              ["conv2d_layer", 0, 0, {}]
+            ],
+            "outbound_nodes": [
+              ["dense_layer", 0, 0, {}]
+            ]
+          },
+          {
+            "name": "dense_layer",
+            "class_name": "Dense",
+            "config": {
+              "name": "dense_1",
+              "trainable": false,
+              "dtype": "float32",
+              "units": 3,  // Number of disease classes (modify as needed)
+              "activation": "softmax",
+              "use_bias": true,
+              "kernel_initializer": {
+                "class_name": "GlorotUniform",
+                "config": { "seed": null }
+              },
+              "bias_initializer": { "class_name": "Zeros", "config": {} },
+              "kernel_regularizer": null,
+              "bias_regularizer": null,
+              "activity_regularizer": null,
+              "kernel_constraint": null,
+              "bias_constraint": null
+            },
+            "inbound_nodes": [
+              ["flatten_layer", 0, 0, {}]
+            ],
+            "outbound_nodes": []
+          }
+        ],
+        "input_layers": [["input_layer", 0, 0]],
+        "output_layers": [["dense_layer", 0, 0]]
+      },
+      "training_config": {
+        "optimizer_config": {
+          "class_name": "Adam",
+          "config": {
+            "name": "Adam",
+            "learning_rate": 0.001
+          }
+        },
+        "loss": "categorical_crossentropy",
+        "metrics": ["accuracy"]
+      }
+    },
+    "weightsManifest": []
+  }
+  

@@ -1,64 +1,87 @@
-// PlantDiseasePrediction.js
+// screens/DiseaseDetectionScreen.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Button } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 import * as tf from '@tensorflow/tfjs';
-import * as mobilenet from '@tensorflow-models/mobilenet';
-import * as FileSystem from 'react-native-fs';
+import '@tensorflow/tfjs-react-native';
 
-const PlantDiseasePrediction = () => {
-  const [model, setModel] = useState(null);
+const DiseaseDetectionScreen = () => {
   const [imageUri, setImageUri] = useState(null);
   const [prediction, setPrediction] = useState('');
+  const [model, setModel] = useState(null);
 
   useEffect(() => {
+    // Load the pre-trained model when the component mounts
     loadModel();
   }, []);
 
   const loadModel = async () => {
     try {
-      const modelJson = require('./path_to_your_model/plant_disease_model.json');
-      const modelWeights = await FileSystem.readAsset(
-        'path_to_your_model/plant_disease_model.weights.bin'
-      );
-
-      const loadedModel = await tf.loadLayersModel(
-        tf.io.fromMemory(modelJson, modelWeights)
-      );
-      setModel(loadedModel);
+      const model = await tf.loadLayersModel('./model.json');
+      setModel(model);
     } catch (error) {
       console.error('Error loading the model:', error);
     }
   };
 
-  const predictDisease = async () => {
-    if (model && imageUri) {
-      const image = Image.resolveAssetSource({ uri: imageUri }).uri;
-      const imageTensor = await loadImage(image);
-      const predictions = await model.predict(imageTensor);
+  const selectImage = () => {
+    const options = {
+      mediaType: 'photo',
+      quality: 1,
+    };
 
-      // Process predictions and update state
-      // You'll need to handle the prediction results based on your model and dataset.
-      setPrediction(predictions);
+    launchImageLibrary(options, (response) => {
+      if (response.didCancel || response.error) {
+        // Handle cancellation or error
+      } else {
+        setImageUri(response.uri);
+      }
+    });
+  };
+
+  const detectDisease = async () => {
+    if (model && imageUri) {
+      try {
+        const image = await tf.node.decodeImage(imageUri);
+        const resizedImage = tf.image.resizeBilinear(image, [224, 224]); // Adjust dimensions based on your model's input size
+        const expandedImage = resizedImage.expandDims(0); // Add batch dimension
+
+        // Perform disease prediction
+        const predictions = await model.predict(expandedImage);
+
+        // Process and display the prediction results
+        const predictedClass = predictions.argMax(1).dataSync()[0];
+        const predictedClassName = getClassName(predictedClass); // Implement this function
+
+        setPrediction(predictedClassName);
+
+        // Clean up resources
+        image.dispose();
+        resizedImage.dispose();
+        expandedImage.dispose();
+        predictions.dispose();
+      } catch (error) {
+        console.error('Error predicting disease:', error);
+      }
     }
   };
 
-  const loadImage = async (path) => {
-    const img = await tf.node.decodeImage(fs.readFileSync(path));
-    const expanded = img.expandDims(0);
-    img.dispose();
-    return expanded;
+  const getClassName = (classIndex) => {
+    // Implement a mapping between class indices and class names based on your model's setup
+    // For example:
+    const classNames = ['Healthy', 'Bacterial Blight', 'Other Diseases'];
+    return classNames[classIndex];
   };
 
   return (
     <View>
-      <Text>Plant Disease Prediction</Text>
-      <Image source={{ uri: imageUri }} style={{ width: 200, height: 200 }} />
+      <Text>Disease Detection</Text>
+      {imageUri && <Image source={{ uri: imageUri }} style={{ width: 200, height: 200 }} />}
       <Button title="Select Image" onPress={selectImage} />
-      <Button title="Capture Image" onPress={captureImage} />
-      <Button title="Predict Disease" onPress={predictDisease} />
+      <Button title="Detect Disease" onPress={detectDisease} />
       <Text>Prediction: {prediction}</Text>
     </View>
   );
 };
 
-export default PlantDiseasePrediction;
+export default DiseaseDetectionScreen;
